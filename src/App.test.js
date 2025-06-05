@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders kanban columns', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByText(/To Do/i)).toBeInTheDocument();
+  expect(screen.getByText(/Em Progresso/i)).toBeInTheDocument();
+  expect(screen.getByText(/Concluído/i)).toBeInTheDocument();
 });
