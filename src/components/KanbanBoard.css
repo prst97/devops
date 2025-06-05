@@ -63,6 +63,18 @@
   overflow-y: auto;
 }
 
+.kanban-column ul.drag-over {
+  outline: 2px dashed rgba(59, 130, 246, 0.4);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.kanban-column .rbd-placeholder,
+.kanban-column [data-rbd-placeholder-context-id] {
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
 .kanban-task {
   background-color: #ffffff;
   border-radius: 6px;
@@ -77,6 +89,11 @@
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+}
+
+.kanban-task.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
 }
 
 .kanban-task:hover {

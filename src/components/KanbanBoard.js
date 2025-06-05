@@ -72,10 +72,45 @@ function KanbanBoard() {
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const { source, destination } = result;
-    if (source.index === destination.index) return;
-    setColumns((prev) => reorder(prev, source.index, destination.index));
-  }
+    const { source, destination, type } = result;
+
+    if (type === 'COLUMN') {
+      if (source.index === destination.index) return;
+      setColumns((prev) => reorder(prev, source.index, destination.index));
+      return;
+    }
+
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    )
+      return;
+
+    setTasks((prev) => {
+      const tasksByStatus = {};
+      prev.forEach((t) => {
+        if (!tasksByStatus[t.status]) tasksByStatus[t.status] = [];
+        tasksByStatus[t.status].push({ ...t });
+      });
+
+      const [moved] = tasksByStatus[source.droppableId].splice(source.index, 1);
+      moved.status = destination.droppableId;
+      if (!tasksByStatus[destination.droppableId])
+        tasksByStatus[destination.droppableId] = [];
+      tasksByStatus[destination.droppableId].splice(destination.index, 0, moved);
+
+      let ordered = [];
+      columns.forEach((col) => {
+        if (tasksByStatus[col.key]) ordered = ordered.concat(tasksByStatus[col.key]);
+      });
+      Object.keys(tasksByStatus).forEach((key) => {
+        if (!columns.some((c) => c.key === key)) {
+          ordered = ordered.concat(tasksByStatus[key]);
+        }
+      });
+      return ordered;
+    });
+  };
 
   const boardWidth = Math.min(
     960 + Math.max(columns.length - 3, 0) * 220,
@@ -120,54 +155,76 @@ function KanbanBoard() {
                           </button>
                         )}
                       </h3>
-                      <ul>
-                        {tasks
-                          .filter((task) => task.status === column.key)
-                          .map((task) => (
-                            <li
-                              key={task.id}
-                              className="kanban-task"
-                              style={{ borderLeft: `4px solid ${column.color}` }}
-                            >
-                              {editingTaskId === task.id ? (
-                                <input
-                                  className="task-input"
-                                  value={task.title}
-                                  autoFocus
-                                  onChange={(e) =>
-                                    handleTaskChange(task.id, e.target.value)
-                                  }
-                                  onBlur={finishEditing}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') finishEditing();
-                                  }}
-                                />
-                              ) : (
-                                <>
-                                  <span onClick={() => startEditing(task.id)}>
-                                    {task.title || 'Nova Tarefa'}
-                                  </span>
-                                  <button
-                                    className="delete-task-btn"
-                                    aria-label="Excluir tarefa"
-                                    onClick={() => deleteTask(task.id)}
-                                  >
-                                    &times;
-                                  </button>
-                                </>
-                              )}
-                            </li>
-                          ))}
-                        <li className="add-task-item">
-                          <button
-                            className="add-task-btn"
-                            aria-label="Adicionar tarefa"
-                            onClick={() => addTask(column.key)}
+                      <Droppable droppableId={column.key} type="TASK">
+                        {(dropProvided, dropSnapshot) => (
+                          <ul
+                            ref={dropProvided.innerRef}
+                            {...dropProvided.droppableProps}
+                            className={dropSnapshot.isDraggingOver ? 'drag-over' : ''}
                           >
-                            +
-                          </button>
-                        </li>
-                      </ul>
+                            {tasks
+                              .filter((task) => task.status === column.key)
+                              .map((task, idx) => (
+                                <Draggable
+                                  draggableId={task.id.toString()}
+                                  index={idx}
+                                  key={task.id}
+                                >
+                                  {(dragProvided, dragSnapshot) => (
+                                    <li
+                                      ref={dragProvided.innerRef}
+                                      {...dragProvided.draggableProps}
+                                      {...dragProvided.dragHandleProps}
+                                      className={`kanban-task${dragSnapshot.isDragging ? ' dragging' : ''}`}
+                                      style={{
+                                        borderLeft: `4px solid ${column.color}`,
+                                        ...dragProvided.draggableProps.style,
+                                      }}
+                                    >
+                                      {editingTaskId === task.id ? (
+                                        <input
+                                          className="task-input"
+                                          value={task.title}
+                                          autoFocus
+                                          onChange={(e) =>
+                                            handleTaskChange(task.id, e.target.value)
+                                          }
+                                          onBlur={finishEditing}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') finishEditing();
+                                          }}
+                                        />
+                                      ) : (
+                                        <>
+                                          <span onClick={() => startEditing(task.id)}>
+                                            {task.title || 'Nova Tarefa'}
+                                          </span>
+                                          <button
+                                            className="delete-task-btn"
+                                            aria-label="Excluir tarefa"
+                                            onClick={() => deleteTask(task.id)}
+                                          >
+                                            &times;
+                                          </button>
+                                        </>
+                                      )}
+                                    </li>
+                                  )}
+                                </Draggable>
+                              ))}
+                            {dropProvided.placeholder}
+                            <li className="add-task-item">
+                              <button
+                                className="add-task-btn"
+                                aria-label="Adicionar tarefa"
+                                onClick={() => addTask(column.key)}
+                              >
+                                +
+                              </button>
+                            </li>
+                          </ul>
+                        )}
+                      </Droppable>
                     </div>
                   )}
                 </Draggable>
