@@ -63,15 +63,19 @@ function KanbanBoard() {
     setNewColor('#eef2f7');
   };
 
+  const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
+  };
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     const { source, destination } = result;
     if (source.index === destination.index) return;
-    const updated = Array.from(columns);
-    const [moved] = updated.splice(source.index, 1);
-    updated.splice(destination.index, 0, moved);
-    setColumns(updated);
-  };
+    setColumns((prev) => reorder(prev, source.index, destination.index));
+  }
 
   const boardWidth = Math.min(
     960 + Math.max(columns.length - 3, 0) * 220,
