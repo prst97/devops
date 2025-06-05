@@ -7,6 +7,8 @@ const initialTasks = [
   { id: 3, title: 'Testar aplicação', status: 'done' },
 ];
 
+const MAX_COLUMNS = 5;
+
 function KanbanBoard() {
   const [tasks] = useState(initialTasks);
 
@@ -22,15 +24,21 @@ function KanbanBoard() {
   const addColumn = (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
+    if (columns.length >= MAX_COLUMNS) return;
     const key = `col_${Date.now()}`;
     setColumns([...columns, { key, title: newTitle, color: newColor }]);
     setNewTitle('');
     setNewColor('#eef2f7');
   };
 
+  const boardWidth = Math.min(
+    960 + Math.max(columns.length - 3, 0) * 220,
+    1400
+  );
+
   return (
     <div className="kanban-wrapper">
-      <div className="kanban-board">
+      <div className="kanban-board" style={{ maxWidth: boardWidth }}>
         {columns.map((column) => (
           <div key={column.key} className="kanban-column">
             <h3 style={{ backgroundColor: column.color }}>{column.title}</h3>
@@ -58,7 +66,9 @@ function KanbanBoard() {
           value={newColor}
           onChange={(e) => setNewColor(e.target.value)}
         />
-        <button type="submit">Adicionar Coluna</button>
+        <button type="submit" disabled={columns.length >= MAX_COLUMNS}>
+          Adicionar Coluna
+        </button>
       </form>
     </div>
   );
