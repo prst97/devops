@@ -17,11 +17,36 @@ const INITIAL_COLUMNS = [
 const INITIAL_COLUMN_KEYS = INITIAL_COLUMNS.map((c) => c.key);
 
 function KanbanBoard() {
-  const [tasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState(initialTasks);
+  const [editingTaskId, setEditingTaskId] = useState(null);
   const [columns, setColumns] = useState(INITIAL_COLUMNS);
 
   const [newTitle, setNewTitle] = useState('');
   const [newColor, setNewColor] = useState('#eef2f7');
+
+  const addTask = (status) => {
+    const id = Date.now();
+    setTasks([...tasks, { id, title: '', status }]);
+    setEditingTaskId(id);
+  };
+
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
+
+  const startEditing = (id) => {
+    setEditingTaskId(id);
+  };
+
+  const handleTaskChange = (id, value) => {
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, title: value } : t))
+    );
+  };
+
+  const finishEditing = () => {
+    setEditingTaskId(null);
+  };
 
   const deleteColumn = (key) => {
     if (INITIAL_COLUMN_KEYS.includes(key)) return;
@@ -100,9 +125,44 @@ function KanbanBoard() {
                               className="kanban-task"
                               style={{ borderLeft: `4px solid ${column.color}` }}
                             >
-                              {task.title}
+                              {editingTaskId === task.id ? (
+                                <input
+                                  className="task-input"
+                                  value={task.title}
+                                  autoFocus
+                                  onChange={(e) =>
+                                    handleTaskChange(task.id, e.target.value)
+                                  }
+                                  onBlur={finishEditing}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') finishEditing();
+                                  }}
+                                />
+                              ) : (
+                                <>
+                                  <span onClick={() => startEditing(task.id)}>
+                                    {task.title || 'Nova Tarefa'}
+                                  </span>
+                                  <button
+                                    className="delete-task-btn"
+                                    aria-label="Excluir tarefa"
+                                    onClick={() => deleteTask(task.id)}
+                                  >
+                                    &times;
+                                  </button>
+                                </>
+                              )}
                             </li>
                           ))}
+                        <li className="add-task-item">
+                          <button
+                            className="add-task-btn"
+                            aria-label="Adicionar tarefa"
+                            onClick={() => addTask(column.key)}
+                          >
+                            +
+                          </button>
+                        </li>
                       </ul>
                     </div>
                   )}
