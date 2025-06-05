@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import './KanbanBoard.css';
+import React, { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "./KanbanBoard.css";
 
 const initialTasks = [
-  { id: 1, title: 'Configurar projeto', status: 'todo' },
-  { id: 2, title: 'Criar componentes', status: 'doing' },
-  { id: 3, title: 'Testar aplicação', status: 'done' },
+  { id: 1, title: "Configurar projeto", status: "todo" },
+  { id: 2, title: "Criar componentes", status: "doing" },
+  { id: 3, title: "Testar aplicação", status: "done" },
 ];
 
 const MAX_COLUMNS = 6;
 const INITIAL_COLUMNS = [
-  { key: 'todo', title: 'To Do', color: '#e6f4ff' },
-  { key: 'doing', title: 'Em Progresso', color: '#fff8e6' },
-  { key: 'done', title: 'Concluído', color: '#e6ffe6' },
+  { key: "todo", title: "To Do", color: "#e6f4ff" },
+  { key: "doing", title: "Em Progresso", color: "#fff8e6" },
+  { key: "done", title: "Concluído", color: "#e6ffe6" },
 ];
 const INITIAL_COLUMN_KEYS = INITIAL_COLUMNS.map((c) => c.key);
 
@@ -21,64 +21,62 @@ function KanbanBoard() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [columns, setColumns] = useState(INITIAL_COLUMNS);
 
-const [newTitle, setNewTitle] = useState('');
-const [newColor, setNewColor] = useState('#eef2f7');
+  const [newTitle, setNewTitle] = useState("");
+  const [newColor, setNewColor] = useState("#eef2f7");
 
   useEffect(() => {
-    fetch('/api/columns')
+    fetch("/api/columns")
       .then((res) => res.json())
       .then(setColumns)
       .catch(() => setColumns(INITIAL_COLUMNS));
-    fetch('/api/tasks')
+    fetch("/api/tasks")
       .then((res) => res.json())
       .then(setTasks)
       .catch(() => setTasks(initialTasks));
   }, []);
 
-const addTask = (status) => {
-  const id = Date.now();
-  const task = { id, title: '', status };
-  setTasks([...tasks, task]);
-  setEditingTaskId(id);
-  fetch('/api/tasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(task),
-  });
-};
+  const addTask = (status) => {
+    const id = Date.now();
+    const task = { id, title: "", status };
+    setTasks([...tasks, task]);
+    setEditingTaskId(id);
+    fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(task),
+    });
+  };
 
-const deleteTask = (id) => {
-  setTasks(tasks.filter((t) => t.id !== id));
-  fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-};
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((t) => t.id !== id));
+    fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  };
 
   const startEditing = (id) => {
     setEditingTaskId(id);
   };
 
   const handleTaskChange = (id, value) => {
-    setTasks(
-      tasks.map((t) => (t.id === id ? { ...t, title: value } : t))
-    );
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, title: value } : t)));
   };
 
-const finishEditing = () => {
-  const task = tasks.find((t) => t.id === editingTaskId);
-  if (task) {
-    fetch(`/api/tasks/${task.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(task),
-    });
-  }
-  setEditingTaskId(null);
-};
+  const finishEditing = () => {
+    const task = tasks.find((t) => t.id === editingTaskId);
+    if (task) {
+      fetch(`/api/tasks/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+    }
+    setEditingTaskId(null);
+  };
 
   const deleteColumn = (key) => {
     if (INITIAL_COLUMN_KEYS.includes(key)) return;
     setColumns((cols) => cols.filter((col) => col.key !== key));
     setTasks((ts) => ts.filter((t) => t.status !== key));
-    fetch(`/api/columns/${key}`, { method: 'DELETE' });
+    fetch(`/api/columns/${key}`, { method: "DELETE" });
   };
 
   const addColumn = (e) => {
@@ -87,13 +85,13 @@ const finishEditing = () => {
     if (columns.length >= MAX_COLUMNS) return;
     const col = { key: `col_${Date.now()}`, title: newTitle, color: newColor };
     setColumns((prev) => [...prev, col]);
-    fetch('/api/columns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/api/columns", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(col),
     }).catch(() => {});
-    setNewTitle('');
-    setNewColor('#eef2f7');
+    setNewTitle("");
+    setNewColor("#eef2f7");
   };
 
   const reorder = (list, startIndex, endIndex) => {
@@ -107,13 +105,13 @@ const finishEditing = () => {
     if (!result.destination) return;
     const { source, destination, type } = result;
 
-    if (type === 'COLUMN') {
+    if (type === "COLUMN") {
       if (source.index === destination.index) return;
       setColumns((prev) => {
         const updatedCols = reorder(prev, source.index, destination.index);
-        fetch('/api/reorderColumns', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+        fetch("/api/reorderColumns", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedCols),
         });
         return updatedCols;
@@ -138,11 +136,16 @@ const finishEditing = () => {
       moved.status = destination.droppableId;
       if (!tasksByStatus[destination.droppableId])
         tasksByStatus[destination.droppableId] = [];
-      tasksByStatus[destination.droppableId].splice(destination.index, 0, moved);
+      tasksByStatus[destination.droppableId].splice(
+        destination.index,
+        0,
+        moved,
+      );
 
       let ordered = [];
       columns.forEach((col) => {
-        if (tasksByStatus[col.key]) ordered = ordered.concat(tasksByStatus[col.key]);
+        if (tasksByStatus[col.key])
+          ordered = ordered.concat(tasksByStatus[col.key]);
       });
       Object.keys(tasksByStatus).forEach((key) => {
         if (!columns.some((c) => c.key === key)) {
@@ -153,9 +156,9 @@ const finishEditing = () => {
     };
     setTasks((prev) => {
       const resultTasks = updated(prev);
-      fetch('/api/reorderTasks', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      fetch("/api/reorderTasks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resultTasks),
       });
       return resultTasks;
@@ -164,7 +167,7 @@ const finishEditing = () => {
 
   const boardWidth = Math.min(
     960 + Math.max(columns.length - 3, 0) * 220,
-    1400
+    1400,
   );
 
   return (
@@ -190,7 +193,7 @@ const finishEditing = () => {
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                       className={`kanban-column${
-                        snapshot.isDragging ? ' dragging' : ''
+                        snapshot.isDragging ? " dragging" : ""
                       }`}
                     >
                       <h3 style={{ backgroundColor: column.color }}>
@@ -210,7 +213,9 @@ const finishEditing = () => {
                           <ul
                             ref={dropProvided.innerRef}
                             {...dropProvided.droppableProps}
-                            className={dropSnapshot.isDraggingOver ? 'drag-over' : ''}
+                            className={
+                              dropSnapshot.isDraggingOver ? "drag-over" : ""
+                            }
                           >
                             {tasks
                               .filter((task) => task.status === column.key)
@@ -225,7 +230,7 @@ const finishEditing = () => {
                                       ref={dragProvided.innerRef}
                                       {...dragProvided.draggableProps}
                                       {...dragProvided.dragHandleProps}
-                                      className={`kanban-task${dragSnapshot.isDragging ? ' dragging' : ''}`}
+                                      className={`kanban-task${dragSnapshot.isDragging ? " dragging" : ""}`}
                                       style={{
                                         borderLeft: `4px solid ${column.color}`,
                                         ...dragProvided.draggableProps.style,
@@ -237,17 +242,25 @@ const finishEditing = () => {
                                           value={task.title}
                                           autoFocus
                                           onChange={(e) =>
-                                            handleTaskChange(task.id, e.target.value)
+                                            handleTaskChange(
+                                              task.id,
+                                              e.target.value,
+                                            )
                                           }
                                           onBlur={finishEditing}
                                           onKeyDown={(e) => {
-                                            if (e.key === 'Enter') finishEditing();
+                                            if (e.key === "Enter")
+                                              finishEditing();
                                           }}
                                         />
                                       ) : (
                                         <>
-                                          <span onClick={() => startEditing(task.id)}>
-                                            {task.title || 'Nova Tarefa'}
+                                          <span
+                                            onClick={() =>
+                                              startEditing(task.id)
+                                            }
+                                          >
+                                            {task.title || "Nova Tarefa"}
                                           </span>
                                           <button
                                             className="delete-task-btn"

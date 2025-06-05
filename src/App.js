@@ -1,5 +1,5 @@
-import KanbanBoard from './components/KanbanBoard';
-import './App.css';
+import KanbanBoard from "./components/KanbanBoard";
+import "./App.css";
 
 function App() {
   return (
