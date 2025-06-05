@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './KanbanBoard.css';
 
 const initialTasks = [
@@ -37,6 +38,16 @@ function KanbanBoard() {
     setNewColor('#eef2f7');
   };
 
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+    if (source.index === destination.index) return;
+    const updated = Array.from(columns);
+    const [moved] = updated.splice(source.index, 1);
+    updated.splice(destination.index, 0, moved);
+    setColumns(updated);
+  };
+
   const boardWidth = Math.min(
     960 + Math.max(columns.length - 3, 0) * 220,
     1400
@@ -44,33 +55,64 @@ function KanbanBoard() {
 
   return (
     <div className="kanban-wrapper">
-      <div className="kanban-board" style={{ maxWidth: boardWidth }}>
-        {columns.map((column) => (
-          <div key={column.key} className="kanban-column">
-            <h3 style={{ backgroundColor: column.color }}>
-              {column.title}
-              {!INITIAL_COLUMN_KEYS.includes(column.key) && (
-                <button
-                  className="delete-column-btn"
-                  aria-label={`Remover coluna ${column.title}`}
-                  onClick={() => deleteColumn(column.key)}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="board" direction="horizontal" type="COLUMN">
+          {(provided) => (
+            <div
+              className="kanban-board"
+              style={{ maxWidth: boardWidth }}
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {columns.map((column, index) => (
+                <Draggable
+                  draggableId={column.key}
+                  index={index}
+                  key={column.key}
                 >
-                  &times;
-                </button>
-              )}
-            </h3>
-            <ul>
-              {tasks
-                .filter((task) => task.status === column.key)
-                .map((task) => (
-                  <li key={task.id} className="kanban-task">
-                    {task.title}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={`kanban-column${
+                        snapshot.isDragging ? ' dragging' : ''
+                      }`}
+                    >
+                      <h3 style={{ backgroundColor: column.color }}>
+                        {column.title}
+                        {!INITIAL_COLUMN_KEYS.includes(column.key) && (
+                          <button
+                            className="delete-column-btn"
+                            aria-label={`Remover coluna ${column.title}`}
+                            onClick={() => deleteColumn(column.key)}
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </h3>
+                      <ul>
+                        {tasks
+                          .filter((task) => task.status === column.key)
+                          .map((task) => (
+                            <li
+                              key={task.id}
+                              className="kanban-task"
+                              style={{ borderLeft: `4px solid ${column.color}` }}
+                            >
+                              {task.title}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
       <form className="add-column" onSubmit={addColumn}>
         <input
           type="text"

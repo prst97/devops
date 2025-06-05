@@ -14,7 +14,7 @@
   gap: 1rem;
   max-width: 1400px;
   width: 100%;
-  flex-wrap: wrap;
+  overflow-x: auto;
   background-color: #fff;
   padding: 1rem;
   box-sizing: border-box;
@@ -32,7 +32,12 @@
   flex-direction: column;
   max-height: 75vh;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: grab;
+}
 
+.kanban-column.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
 }
 
 .kanban-column h3 {
@@ -61,12 +66,13 @@
 .kanban-task {
   background-color: #ffffff;
   border-radius: 6px;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
   font-size: 0.95rem;
   color: #2c3e50;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   cursor: grab;
   transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+  position: relative;
 }
 
 .kanban-task:hover {
