@@ -17,7 +17,7 @@ test('allows deleting only added columns', () => {
   fireEvent.change(screen.getByPlaceholderText(/Título da coluna/i), {
     target: { value: 'Extra' },
   });
-  fireEvent.click(screen.getByRole('button', { name: /Teste/i }));
+  fireEvent.click(screen.getByRole('button', { name: /Adicionar Coluna/i }));
 
   expect(screen.getByText('Extra')).toBeInTheDocument();
   const removeBtn = screen.getByLabelText('Remover coluna Extra');
