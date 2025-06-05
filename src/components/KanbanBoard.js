@@ -7,19 +7,25 @@ const initialTasks = [
   { id: 3, title: 'Testar aplicação', status: 'done' },
 ];
 
-const MAX_COLUMNS = 5;
+const MAX_COLUMNS = 6;
+const INITIAL_COLUMNS = [
+  { key: 'todo', title: 'To Do', color: '#e6f4ff' },
+  { key: 'doing', title: 'Em Progresso', color: '#fff8e6' },
+  { key: 'done', title: 'Concluído', color: '#e6ffe6' },
+];
+const INITIAL_COLUMN_KEYS = INITIAL_COLUMNS.map((c) => c.key);
 
 function KanbanBoard() {
   const [tasks] = useState(initialTasks);
-
-  const [columns, setColumns] = useState([
-    { key: 'todo', title: 'To Do', color: '#e6f4ff' },
-    { key: 'doing', title: 'Em Progresso', color: '#fff8e6' },
-    { key: 'done', title: 'Concluído', color: '#e6ffe6' },
-  ]);
+  const [columns, setColumns] = useState(INITIAL_COLUMNS);
 
   const [newTitle, setNewTitle] = useState('');
   const [newColor, setNewColor] = useState('#eef2f7');
+
+  const deleteColumn = (key) => {
+    if (INITIAL_COLUMN_KEYS.includes(key)) return;
+    setColumns(columns.filter((col) => col.key !== key));
+  };
 
   const addColumn = (e) => {
     e.preventDefault();
@@ -41,7 +47,18 @@ function KanbanBoard() {
       <div className="kanban-board" style={{ maxWidth: boardWidth }}>
         {columns.map((column) => (
           <div key={column.key} className="kanban-column">
-            <h3 style={{ backgroundColor: column.color }}>{column.title}</h3>
+            <h3 style={{ backgroundColor: column.color }}>
+              {column.title}
+              {!INITIAL_COLUMN_KEYS.includes(column.key) && (
+                <button
+                  className="delete-column-btn"
+                  aria-label={`Remover coluna ${column.title}`}
+                  onClick={() => deleteColumn(column.key)}
+                >
+                  &times;
+                </button>
+              )}
+            </h3>
             <ul>
               {tasks
                 .filter((task) => task.status === column.key)
