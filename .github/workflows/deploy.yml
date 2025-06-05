@@ -10,22 +10,46 @@ on:
 
 jobs:
   build:
+    name: Build, Test and Lint
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Set up Node.js (v20)
+        uses: actions/setup-node@v3
         with:
-          node-version: '20.5.0'
+          node-version: '20'
+          cache: 'npm' 
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install Lint Dependencies
+        run: npm install eslint prettier --no-save
+      - name: Run ESLint
+        run: |
+          npx eslint "src/**" --max-warnings=0
 
-      - name: Run tests
-        run: npm test
+      - name: Install All Dependencies
+        run: |
+          echo ">> Installing project dependencies..."
+          npm ci
 
-      - name: Build the application
-        run: npm run build
+      - name: Run Jest Tests (CI mode)
+        run: |
+          echo ">> Executing tests in CI mode..."
+          CI=true npm test -- --watchAll=false
+
+      - name: Build React App
+        run: |
+          echo ">> Building React application..."
+          npm run build
+
+      - name: Check Prettier Formatting
+        run: |
+          echo ">> Verifying Prettier formatting..."
+          npx prettier --check "src/**/*.{js,jsx,css}"
+
+      - name: CI Summary
+        if: failure()
+        run: |
+          echo "::error::One or more steps in CI failed. Please check the logs above."
