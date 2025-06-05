@@ -9,10 +9,8 @@ const register = new client.Registry();
 const port = process.env.PORT || 3000;
 const hostname = os.hostname();
 
-// Collect default metrics (CPU, Heap, Event Loop)
 client.collectDefaultMetrics({ register });
 
-// Custom metric
 const httpRequestCounter = new client.Counter({
     name: 'http_requests_total',
     help: 'Total de requisi\u00e7\u00f5es HTTP recebidas',
@@ -20,7 +18,6 @@ const httpRequestCounter = new client.Counter({
 });
 register.registerMetric(httpRequestCounter);
 
-// Middleware
 app.use((req, res, next) => {
     res.on('finish', () => {
         httpRequestCounter.inc({
@@ -35,20 +32,16 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve built React app
 const buildPath = path.join(__dirname, 'build');
 app.use(express.static(buildPath));
 
-// API routes
 app.use('/api', require('./controller/controller'));
 
-// Metrics
 app.get('/metrics', async (req, res) => {
     res.set('Content-Type', register.contentType);
     res.end(await register.metrics());
 });
 
-// Fallback to index.html for SPA
 app.get('/', (req, res) => {
     res.sendFile(path.join(buildPath, 'index.html'));
 });

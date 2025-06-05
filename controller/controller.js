@@ -65,10 +65,10 @@ router.get('/columns', (req, res) => {
 
 // Create a new column
 router.post('/columns', (req, res) => {
-  const { title, color } = req.body;
+  const { key, title, color } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   const column = {
-    key: `col_${Date.now()}`,
+    key: key || `col_${Date.now()}`,
     title,
     color: color || '#eef2f7',
   };
@@ -102,6 +102,43 @@ router.delete('/columns/:key', (req, res) => {
   columns = columns.filter((c) => c.key !== key);
   tasks = tasks.filter((t) => t.status !== key);
   res.status(204).end();
+});
+
+// Reorder tasks
+router.put('/reorderTasks', (req, res) => {
+  const newOrder = req.body;
+  if (!Array.isArray(newOrder)) {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
+  tasks = newOrder.map((t) => {
+    const column = columns.find((c) => c.key === t.status);
+    return {
+      id: t.id,
+      title: t.title || '',
+      status: t.status || 'todo',
+      color: column ? column.color : t.color || '#eef2f7',
+    };
+  });
+  res.json(tasks);
+});
+
+// Reorder columns
+router.put('/reorderColumns', (req, res) => {
+  const newColumns = req.body;
+  if (!Array.isArray(newColumns)) {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
+  columns = newColumns.map((c) => ({
+    key: c.key,
+    title: c.title,
+    color: c.color || '#eef2f7',
+  }));
+  // sync task colors with potentially reordered columns
+  tasks = tasks.map((t) => {
+    const col = columns.find((c) => c.key === t.status);
+    return col ? { ...t, color: col.color } : t;
+  });
+  res.json(columns);
 });
 
 module.exports = router;

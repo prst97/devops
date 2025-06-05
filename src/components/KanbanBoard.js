@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './KanbanBoard.css';
 
@@ -17,22 +17,40 @@ const INITIAL_COLUMNS = [
 const INITIAL_COLUMN_KEYS = INITIAL_COLUMNS.map((c) => c.key);
 
 function KanbanBoard() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [columns, setColumns] = useState(INITIAL_COLUMNS);
 
-  const [newTitle, setNewTitle] = useState('');
-  const [newColor, setNewColor] = useState('#eef2f7');
+const [newTitle, setNewTitle] = useState('');
+const [newColor, setNewColor] = useState('#eef2f7');
 
-  const addTask = (status) => {
-    const id = Date.now();
-    setTasks([...tasks, { id, title: '', status }]);
-    setEditingTaskId(id);
-  };
+  useEffect(() => {
+    fetch('/api/columns')
+      .then((res) => res.json())
+      .then(setColumns)
+      .catch(() => setColumns(INITIAL_COLUMNS));
+    fetch('/api/tasks')
+      .then((res) => res.json())
+      .then(setTasks)
+      .catch(() => setTasks(initialTasks));
+  }, []);
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter((t) => t.id !== id));
-  };
+const addTask = (status) => {
+  const id = Date.now();
+  const task = { id, title: '', status };
+  setTasks([...tasks, task]);
+  setEditingTaskId(id);
+  fetch('/api/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+};
+
+const deleteTask = (id) => {
+  setTasks(tasks.filter((t) => t.id !== id));
+  fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+};
 
   const startEditing = (id) => {
     setEditingTaskId(id);
@@ -44,21 +62,36 @@ function KanbanBoard() {
     );
   };
 
-  const finishEditing = () => {
-    setEditingTaskId(null);
-  };
+const finishEditing = () => {
+  const task = tasks.find((t) => t.id === editingTaskId);
+  if (task) {
+    fetch(`/api/tasks/${task.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(task),
+    });
+  }
+  setEditingTaskId(null);
+};
 
   const deleteColumn = (key) => {
     if (INITIAL_COLUMN_KEYS.includes(key)) return;
-    setColumns(columns.filter((col) => col.key !== key));
+    setColumns((cols) => cols.filter((col) => col.key !== key));
+    setTasks((ts) => ts.filter((t) => t.status !== key));
+    fetch(`/api/columns/${key}`, { method: 'DELETE' });
   };
 
   const addColumn = (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
     if (columns.length >= MAX_COLUMNS) return;
-    const key = `col_${Date.now()}`;
-    setColumns([...columns, { key, title: newTitle, color: newColor }]);
+    const col = { key: `col_${Date.now()}`, title: newTitle, color: newColor };
+    setColumns((prev) => [...prev, col]);
+    fetch('/api/columns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(col),
+    }).catch(() => {});
     setNewTitle('');
     setNewColor('#eef2f7');
   };
@@ -76,7 +109,15 @@ function KanbanBoard() {
 
     if (type === 'COLUMN') {
       if (source.index === destination.index) return;
-      setColumns((prev) => reorder(prev, source.index, destination.index));
+      setColumns((prev) => {
+        const updatedCols = reorder(prev, source.index, destination.index);
+        fetch('/api/reorderColumns', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedCols),
+        });
+        return updatedCols;
+      });
       return;
     }
 
@@ -86,7 +127,7 @@ function KanbanBoard() {
     )
       return;
 
-    setTasks((prev) => {
+    const updated = (prev) => {
       const tasksByStatus = {};
       prev.forEach((t) => {
         if (!tasksByStatus[t.status]) tasksByStatus[t.status] = [];
@@ -109,6 +150,15 @@ function KanbanBoard() {
         }
       });
       return ordered;
+    };
+    setTasks((prev) => {
+      const resultTasks = updated(prev);
+      fetch('/api/reorderTasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultTasks),
+      });
+      return resultTasks;
     });
   };
 
