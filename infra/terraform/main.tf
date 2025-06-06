@@ -144,7 +144,6 @@ EOT
     type            = "LINUX_CONTAINER"
     privileged_mode = false
 
-    # Aqui definimos cada variável de ambiente como bloco environment_variable
     environment_variable {
       name  = "BUCKET_NAME"
       value = aws_s3_bucket.site.id
