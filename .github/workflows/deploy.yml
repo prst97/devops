@@ -1,66 +1,40 @@
-name: Deploy to Production DevOps
+name: CD-Deploy
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build, Test and Lint
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js (v20)
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm' 
+          node-version: 20
+          cache: 'npm'
 
-      - name: Install Lint Dependencies
-        run: npm install eslint prettier --no-save
-      - name: Run ESLint
-        run: |
-          npx eslint "src/**" --max-warnings=0
+      - name: Install Dependencies
+        run: npm ci
 
-      - name: Install All Dependencies
-        run: |
-          echo ">> Installing project dependencies..."
-          npm ci
+      - name: Run Lint
+        run: npx eslint "src/**" --max-warnings=0
 
-      - name: Run Jest Tests (CI mode)
-        run: |
-          echo ">> Executing tests in CI mode..."
-          CI=true npm test -- --watchAll=false
+      - name: Run Tests
+        run: CI=true npm test -- --watchAll=false
 
       - name: Build React App
-        run: |
-          echo ">> Building React application..."
-          npm run build
+        run: npm run build
 
-      - name: Check Prettier Formatting
-        run: |
-          echo ">> Verifying Prettier formatting..."
-          npx prettier --check "src/**/*.{js,jsx,css}"
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
 
-      - name: CI Summary
-        if: failure()
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
-          echo "::error::One or more steps in CI failed. Please check the logs above."
-   
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: aws-actions/configure-aws-credentials@v3
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: us-east-1
-  #     - run: aws s3 sync ./src s3://${{ secrets.SITE_BUCKET_NAME }} --delete
+          netlify deploy --dir=build --site=$NETLIFY_SITE_ID --auth=$NETLIFY_AUTH_TOKEN --prod
