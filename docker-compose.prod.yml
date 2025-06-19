@@ -7,3 +7,6 @@ services:
       target: ""
     ports:
       - "8080:80"
+
+# docker build -t kanban-app:prod .
+# docker run -p 8080:80 kanban-app:prod

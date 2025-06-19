@@ -13,3 +13,5 @@ services:
     environment:
       - NODE_ENV=development
     command: npm start
+
+# docker compose up --build
