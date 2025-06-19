@@ -1,17 +1,39 @@
-# Desenvolvimento local
 version: "3.8"
+
 services:
-  web:
+  frontend:
     build:
       context: .
-      target: build
-    volumes:
-      - .:/app
-      - /app/node_modules
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-    command: npm start
+      - MONGO_URI=mongodb://mongo:27017/kanban
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  mongo:
+    image: mongo:6
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
 
 # docker compose up --build
