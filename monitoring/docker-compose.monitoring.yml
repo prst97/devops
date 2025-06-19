@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  loki:
+    image: grafana/loki:2.9.7
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.7
+    container_name: promtail
+    volumes:
+      - ../logs/nginx:/var/log/nginx:ro
+      - ./loki-config.yml:/etc/promtail/config.yml
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+# Rodando monitoramento:
+# cd monitoring
+# docker compose -f docker-compose.monitoring.yml up --build
+
+# Parando monitoramento:
+# docker compose -f docker-compose.monitoring.yml down
+
+# Prometheus: http://localhost:9090
+# Node Exporter: http://localhost:9100/metrics
+# Grafana: http://localhost:3000
+
+# Entrar em Grafana com login admin senha admin
+# Ir em Connections → Data Sources → Add data source → Prometheus
+# Em Prometheus server URL: http://prometheus:9090 clicar em Save & Test
+
+# Importar dashboards prontos:
+# Dashboards → Create dashboard → Import dashboard
+# Usar ID 1860 para o Node Exporter → Load → selecionar prometheus → Import
+
+# Para monitorar logs do Nginx com Loki:
+# Adicionar o Loki como Data Source no Grafana (http://loki:3100)
+# Ir em Explore → Criar queries para buscar logs do Nginx, por exemplo: {job="nginx"}
