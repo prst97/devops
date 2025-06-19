@@ -50,3 +50,26 @@ services:
 networks:
   monitoring:
     driver: bridge
+
+# Rodando monitoramento:
+# cd monitoring
+# docker compose -f docker-compose.monitoring.yml up --build
+
+# Parando monitoramento:
+# docker compose -f docker-compose.monitoring.yml down
+
+# Prometheus: http://localhost:9090
+# Node Exporter: http://localhost:9100/metrics
+# Grafana: http://localhost:3000
+
+# Entrar em Grafana com login admin senha admin
+# Ir em Connections → Data Sources → Add data source → Prometheus
+# Em Prometheus server URL: http://prometheus:9090 clicar em Save & Test
+
+# Importar dashboards prontos:
+# Dashboards → Create dashboard → Import dashboard
+# Usar ID 1860 para o Node Exporter → Load → selecionar prometheus → Import
+
+# Para monitorar logs do Nginx com Loki:
+# Adicionar o Loki como Data Source no Grafana (http://loki:3100)
+# Ir em Explore → Criar queries para buscar logs do Nginx, por exemplo: {job="nginx"}
