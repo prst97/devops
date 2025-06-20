@@ -46,3 +46,25 @@ Sistema Kanban full stack (React + Express + PostgreSQL) desenvolvido como proje
     ```
 
 ---
+
+## Fluxograma do Pipeline DevOps
+
+```mermaid
+%%{init: {"theme": "dark"}}%%
+graph TD
+    A(Desenvolvedor faz commit/push no Github)
+    A --> B(Pipeline Github Actions inicia)
+    B --> C(Lint, testes, build)
+    C -->D(Tudo ok?)
+    D -->|Não| E(CI FALHA, Deploy Bloqueado)
+    D -->|Sim| F(Deploy automático)
+    F -->G(Frontend em produção Netlify)
+    F -->H(Backend em produção Render)
+    G -->I{Aplicação disponível}
+    H -->I
+    I -->J(Monitoramento com Prometheus/Grafana)
+    I --> K(Logging com Loki/Promtail)
+    click A href "https://github.com/prst97/devops" "Repositório GitHub"
+    click G href "https://devops-pucrs.netlify.app/" "Site Netlify"
+    click H href "https://devops-pucrs.onrender.com/api/" "Render Backend"
+```
