@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  frontend:
+  frontend: # http://localhost:8080/
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -9,31 +9,39 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    environment:
+      - REACT_APP_API_URL=
 
-  backend:
+  backend: # metrics: http://localhost:3000/metrics api: http://localhost:3000/
     build:
       context: .
       dockerfile: Dockerfile.backend
     ports:
       - "3000:3000"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/kanban
+      - POSTGRES_URI=postgres://kanban_user:kanban_pass@postgres:5432/kanban
       - NODE_ENV=production
+      - CORS_ORIGIN=http://localhost:8080,http://127.0.0.1:8080
+      - PORT=3000
     depends_on:
-      - mongo
+      - postgres
     volumes:
       - .:/app
       - /app/node_modules
 
-  mongo:
-    image: mongo:6
+  postgres:
+    image: postgres:16
     restart: always
+    environment:
+      POSTGRES_USER: kanban_user
+      POSTGRES_PASSWORD: kanban_pass
+      POSTGRES_DB: kanban
     ports:
-      - "27017:27017"
+      - "5432:5432"
     volumes:
-      - mongo_data:/data/db
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-  mongo_data:
+  pgdata:
 
 # docker compose up --build
