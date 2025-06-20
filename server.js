@@ -43,9 +43,10 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const buildPath = path.join(__dirname, 'build');
-app.use(express.static(buildPath));
-
+if (process.env.NODE_ENV !== "production") {
+  const buildPath = path.join(__dirname, "build");
+  app.use(express.static(buildPath));
+}
 const pgUri = process.env.POSTGRES_URI || 'postgres://kanban_user:kanban_pass@localhost:5432/kanban';
 const pool = new Pool({ connectionString: pgUri });
 
@@ -311,9 +312,11 @@ app.get('/metrics', async (req, res) => {
   res.end(await register.metrics());
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(buildPath, 'index.html'));
-});
+if (process.env.NODE_ENV !== "production") {
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  });
+}
 
 initDb().then(() => {
   app.listen(port, () => {
